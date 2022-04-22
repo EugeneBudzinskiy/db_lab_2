@@ -1,0 +1,78 @@
+version: "2.1"
+services:
+  database:
+    image: postgres:14.1-alpine
+    restart: on-failure
+    ports:
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    healthcheck:
+      test: pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  loader:
+    image: lab_2_loader:1.0
+    build:
+      context: .
+      dockerfile: loader.Dockerfile
+    env_file:
+      - .env
+    restart: on-failure
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      PG_USER: ${POSTGRES_USER}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
+      PG_DB: ${POSTGRES_DB}
+      PG_HOST: ${POSTGRES_HOST}
+      PG_PORT: ${POSTGRES_PORT}
+
+  flyway:
+    build:
+      context: .
+      dockerfile: flyway.Dockerfile
+    restart: on-failure
+    depends_on:
+      database:
+        condition: service_healthy
+      loader:
+        condition: service_completed_successfully
+    command:
+      -url=jdbc:postgresql://database:${POSTGRES_PORT}/${POSTGRES_DB} -user=${POSTGRES_USER} -password=${POSTGRES_PASSWORD} baseline
+      -url=jdbc:postgresql://database:${POSTGRES_PORT}/${POSTGRES_DB} -user=${POSTGRES_USER} -password=${POSTGRES_PASSWORD} migrate
+
+  app:
+    image: lab_2_app:1.0
+    build:
+      context: .
+      dockerfile: app.Dockerfile
+    env_file:
+      - .env
+    restart: on-failure
+    expose:
+      - "8081"
+    ports:
+      - "8081:8081"
+    depends_on:
+      database:
+        condition: service_healthy
+      loader:
+        condition: service_completed_successfully
+      flyway:
+        condition: service_completed_successfully
+    environment:
+      PG_USER: ${POSTGRES_USER}
+      PG_PASSWORD: ${POSTGRES_PASSWORD}
+      PG_DB: ${POSTGRES_DB}
+      PG_HOST: ${POSTGRES_HOST}
+      PG_PORT: ${POSTGRES_PORT}
