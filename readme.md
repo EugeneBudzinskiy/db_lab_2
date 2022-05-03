@@ -4,13 +4,13 @@
 
 ## Configuration:
 
-##### [.env](.env)
+##### .env
 
-    PG_USER - Username to use for connection to database
-    PG_PASSWORD - Password to user for connection to database
-    PG_DB - Name of database to connect
-    PG_HOST - Host of database to connect
-    PG_PORT - Port of datase to connect
+    POSTGRES_USER_USER=VAL - Username to use for connection to database
+    POSTGRES_USER_PASSWORD=VAL - Password to user for connection to database
+    POSTGRES_USER_DB=VAL - Name of database to connect
+    POSTGRES_USER_HOST=VAL - Host of database to connect
+    POSTGRES_USER_PORT=VAL - Port of database to connect
 
 ##### [modules/config.py](modules/config.py)
 

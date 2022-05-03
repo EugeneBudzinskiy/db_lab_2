@@ -13,7 +13,7 @@ services:
       test: pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}
       interval: 10s
       timeout: 3s
-      retries: 3
+      retries: 10
 
   loader:
     image: lab_2_loader:1.0
@@ -38,6 +38,7 @@ services:
       PG_PORT: ${POSTGRES_PORT}
 
   flyway:
+    image: lab_2_flyway:1.0
     build:
       context: .
       dockerfile: flyway.Dockerfile

@@ -6,33 +6,24 @@ from modules.functions import create_connection
 from modules.functions import execute_query
 
 
-def get_sql_query(data_table_name: str, loc_table_name: str):
-    # query = f'''
-    #          SELECT region, year, AVG(score) AS avg_score FROM {table_name}
-    # WHERE status = 'Зараховано' GROUP BY region, year;
-    # '''
+def get_sql_query():
     query = f'''
-        SELECT region_name, year, AVG(ukrball100) AS ukr_test_score
-            FROM (SELECT reg_location_id, ukrball100, year
-            FROM zno_data WHERE ukrteststatus = 'Зараховано') as t
-            LEFT JOIN locations_info AS l_i
-                ON l_i.location_id = t.reg_location_id
-            GROUP BY region_name, year;
+        SELECT region_name AS region, year, AVG(score_200) AS avg_score FROM
+            (SELECT student_id, region_name, year FROM 
+                (SELECT student_id, reg_location_id, year FROM {TABLE_NAME}) AS t1
+                LEFT JOIN (SELECT location_id, region_name FROM {LOCATIONS_TABLE_NAME}) AS t2
+                ON t1.reg_location_id = t2.location_id) AS t3
+            LEFT JOIN (SELECT student_id, score_200 FROM {TESTS_TABLE_NAME} 
+                          WHERE name = 'Українська мова і література' AND 
+                                status = 'Зараховано') AS t4
+            ON t3.student_id = t4.student_id GROUP BY region, year ORDER BY region;
     '''
     return query
 
 
-def save_bar(filepath: str,
-             labels: list,
-             a_values: list,
-             b_values: list,
-             a_label: str = 'A values',
-             b_label: str = 'B values',
-             title: str = 'Title',
-             y_label: str = 'y label',
-             vertical_labels: bool = False,
-             size_inches: tuple = None,
-             bar_width: float = .4):
+def save_bar(filepath: str, labels: list, a_values: list, b_values: list, title: str = 'Title',
+             a_label: str = 'A values', b_label: str = 'B values', y_label: str = 'y label',
+             vertical_labels: bool = False, size_inches: tuple = None, bar_width: float = .4):
     x = [x for x in range(len(labels))]
     fig, ax = plt.subplots()
     if size_inches is not None:
@@ -81,22 +72,13 @@ def main():
     y_label = 'Average score'
 
     with connection as conn:
-        q = get_sql_query(data_table_name=TABLE_NAME, loc_table_name=LOCATIONS_TABLE_NAME)
-        res = execute_query(connection=conn, sql_query=q)
+        res = execute_query(connection=conn, sql_query=get_sql_query())
 
     # Save bar plot of results
     labels, a_values, b_values = \
         convert_result(result=res, cutout_word='область', a_key=a_key, b_key=b_key)
-    save_bar(filepath=RESULT_PLOT_PATH,
-             labels=labels,
-             a_values=a_values,
-             b_values=b_values,
-             a_label=a_key,
-             b_label=b_key,
-             title=title,
-             y_label=y_label,
-             vertical_labels=True,
-             size_inches=(12, 6))
+    save_bar(filepath=RESULT_PLOT_PATH, labels=labels, a_values=a_values, b_values=b_values, title=title,
+             a_label=str(a_key), b_label=str(b_key),  y_label=y_label, vertical_labels=True, size_inches=(12, 6))
     logger_engine.print_info('Bar plot is saved!')
 
 

@@ -23,19 +23,17 @@ class LoggerEngine:
 
 class FileArray:
     def __init__(self,
-                 cols_name: list,
-                 cols_type: list,
+                 cols_dict: dict,
                  delimiter: str = ',',
                  decimal: str = '.',
                  nan_value: str = 'null',
-                 added_cols_name: list = None,
-                 added_cols_type: list = None):
+                 added_cols_dict: dict = None):
         self.instructions = dict()
 
-        self.cols_name = cols_name
-        self.cols_type = cols_type
-        self.added_cols_name = added_cols_name
-        self.added_cols_type = added_cols_type
+        self.cols_name = list(cols_dict.keys())
+        self.cols_type = list(cols_dict.values())
+        self.added_cols_name = None if added_cols_dict is None else list(added_cols_dict.keys())
+        self.added_cols_type = None if added_cols_dict is None else list(added_cols_dict.values())
 
         self.delimiter = delimiter
         self.decimal = decimal
